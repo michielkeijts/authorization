@@ -96,7 +96,7 @@ class MapResolver implements ResolverInterface
             throw new InvalidArgumentException($message);
         }
 
-        $class = get_class($resource);
+        $class = $this->getPolicyClass($resource);
 
         if (!isset($this->map[$class])) {
             throw new MissingPolicyException($resource);
@@ -113,5 +113,57 @@ class MapResolver implements ResolverInterface
         }
 
         return new $policy();
+    }
+	
+	/**
+     * Get a policy class for an ORM Table, Entity or Query.
+     *
+     * @param \Cake\Datasource\RepositoryInterface|\Cake\Datasource\EntityInterface|\Cake\Datasource\QueryInterface $resource The resource.
+     * @return string
+     */
+    public function getPolicyClass($resource)
+    {
+        if ($resource instanceof EntityInterface) {
+            return $this->getEntityPolicy($resource);
+        }
+        if ($resource instanceof RepositoryInterface) {
+            return $this->getRepositoryPolicy($resource);
+        }
+        if ($resource instanceof QueryInterface) {
+            return $this->getRepositoryPolicy($resource->repository());
+        }
+        return is_object($resource) ? get_class($resource) : gettype($resource);
+    }
+
+    /**
+     * Get a policy class for an entity
+     *
+     * @param \Cake\Datasource\EntityInterface $entity The entity to get a policy for
+     * @return string
+     */
+    protected function getEntityPolicyClass(EntityInterface $entity)
+    {
+        $class = get_class($entity);
+        $entityNamespace = '\Model\Entity\\';
+        $namespace = str_replace('\\', '/', substr($class, 0, strpos($class, $entityNamespace)));
+        $name = substr($class, strpos($class, $entityNamespace) + strlen($entityNamespace));
+
+        return $this->findPolicy($class, $name, $namespace);
+    }
+
+    /**
+     * Get a policy class for a table
+     *
+     * @param \Cake\Datasource\RepositoryInterface $table The table/repository to get a policy for.
+     * @return string
+     */
+    protected function getRepositoryPolicyClass(RepositoryInterface $table)
+    {
+        $class = get_class($table);
+        $tableNamespace = '\Model\Table\\';
+        $namespace = str_replace('\\', '/', substr($class, 0, strpos($class, $tableNamespace)));
+        $name = substr($class, strpos($class, $tableNamespace) + strlen($tableNamespace));
+
+        return $this->findPolicy($class, $name, $namespace);
     }
 }
