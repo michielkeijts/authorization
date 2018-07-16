@@ -16,6 +16,9 @@ namespace Authorization\Policy;
 
 use Authorization\Policy\Exception\MissingPolicyException;
 use InvalidArgumentException;
+use Cake\Datasource\EntityInterface;
+use Cake\Datasource\QueryInterface;
+use Cake\Datasource\RepositoryInterface;
 
 /**
  * Policy resolver that allows to map policy classes, objects or factories to
@@ -124,13 +127,13 @@ class MapResolver implements ResolverInterface
     public function getPolicyClass($resource)
     {
         if ($resource instanceof EntityInterface) {
-            return $this->getEntityPolicy($resource);
+            return $this->getEntityPolicyClass($resource);
         }
         if ($resource instanceof RepositoryInterface) {
-            return $this->getRepositoryPolicy($resource);
+            return $this->getRepositoryPolicyClass($resource);
         }
         if ($resource instanceof QueryInterface) {
-            return $this->getRepositoryPolicy($resource->repository());
+            return $this->getRepositoryPolicyClass($resource->repository());
         }
         return is_object($resource) ? get_class($resource) : gettype($resource);
     }
@@ -143,12 +146,7 @@ class MapResolver implements ResolverInterface
      */
     protected function getEntityPolicyClass(EntityInterface $entity)
     {
-        $class = get_class($entity);
-        $entityNamespace = '\Model\Entity\\';
-        $namespace = str_replace('\\', '/', substr($class, 0, strpos($class, $entityNamespace)));
-        $name = substr($class, strpos($class, $entityNamespace) + strlen($entityNamespace));
-
-        return $this->findPolicy($class, $name, $namespace);
+        return get_class($entity);
     }
 
     /**
@@ -159,11 +157,6 @@ class MapResolver implements ResolverInterface
      */
     protected function getRepositoryPolicyClass(RepositoryInterface $table)
     {
-        $class = get_class($table);
-        $tableNamespace = '\Model\Table\\';
-        $namespace = str_replace('\\', '/', substr($class, 0, strpos($class, $tableNamespace)));
-        $name = substr($class, strpos($class, $tableNamespace) + strlen($tableNamespace));
-
-        return $this->findPolicy($class, $name, $namespace);
+        return get_class($table);
     }
 }
