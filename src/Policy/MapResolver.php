@@ -16,9 +16,6 @@ namespace Authorization\Policy;
 
 use Authorization\Policy\Exception\MissingPolicyException;
 use InvalidArgumentException;
-use Cake\Datasource\EntityInterface;
-use Cake\Datasource\QueryInterface;
-use Cake\Datasource\RepositoryInterface;
 
 /**
  * Policy resolver that allows to map policy classes, objects or factories to
@@ -99,7 +96,7 @@ class MapResolver implements ResolverInterface
             throw new InvalidArgumentException($message);
         }
 
-        $class = $this->getPolicyClass($resource);
+        $class = get_class($resource);
 
         if (!isset($this->map[$class])) {
             throw new MissingPolicyException($resource);
@@ -116,47 +113,5 @@ class MapResolver implements ResolverInterface
         }
 
         return new $policy();
-    }
-	
-	/**
-     * Get a policy class for an ORM Table, Entity or Query.
-     *
-     * @param \Cake\Datasource\RepositoryInterface|\Cake\Datasource\EntityInterface|\Cake\Datasource\QueryInterface $resource The resource.
-     * @return string
-     */
-    public function getPolicyClass($resource)
-    {
-        if ($resource instanceof EntityInterface) {
-            return $this->getEntityPolicyClass($resource);
-        }
-        if ($resource instanceof RepositoryInterface) {
-            return $this->getRepositoryPolicyClass($resource);
-        }
-        if ($resource instanceof QueryInterface) {
-            return $this->getRepositoryPolicyClass($resource->repository());
-        }
-        return is_object($resource) ? get_class($resource) : gettype($resource);
-    }
-
-    /**
-     * Get a policy class for an entity
-     *
-     * @param \Cake\Datasource\EntityInterface $entity The entity to get a policy for
-     * @return string
-     */
-    protected function getEntityPolicyClass(EntityInterface $entity)
-    {
-        return get_class($entity);
-    }
-
-    /**
-     * Get a policy class for a table
-     *
-     * @param \Cake\Datasource\RepositoryInterface $table The table/repository to get a policy for.
-     * @return string
-     */
-    protected function getRepositoryPolicyClass(RepositoryInterface $table)
-    {
-        return get_class($table);
     }
 }
